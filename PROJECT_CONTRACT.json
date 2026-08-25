@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "metrics": {
+    "production_loc": 3423,
+    "production_files": 34,
+    "production_packages": 8,
+    "test_files": 9,
+    "production_functions": 182,
+    "decision_points": 216
+  },
+  "persistence": {
+    "module": "go.etcd.io/bbolt",
+    "entities": ["Club", "Voter", "Vote", "Review"],
+    "reopen_test": "TestPersistenceSurvivesReopen"
+  },
+  "workflows": [
+    {"steps": ["校验学生资格", "加载参评社团", "写入投票记录", "更新社团票数"], "test": "TestWorkflowOne"},
+    {"steps": ["创建审核任务", "记录评委意见", "汇总审核决定", "发布社团状态"], "test": "TestWorkflowTwo"},
+    {"steps": ["读取已发布社团", "聚合票数", "稳定排序", "返回排行榜快照"], "test": "TestWorkflowThree"}
+  ]
+}
