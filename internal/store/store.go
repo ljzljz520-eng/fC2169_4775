@@ -135,10 +135,19 @@ func (s *Store) ListReviews() ([]domain.Review, error) {
 func (s *Store) IncrementClubVotes(id string) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	var c domain.Club
-	if e := s.db.View(func(tx *bbolt.Tx) error { return get(tx, "clubs", id, &c) }); e != nil {
-		return fmt.Errorf("load club: %w", e)
+	if s.db == nil {
+		return errors.New("closed")
 	}
-	c.VoteCount++
-	return s.db.Update(func(tx *bbolt.Tx) error { return put(tx, "clubs", id, c) })
+	// Read, increment and write inside a single Update transaction. bbolt
+	// serializes writers, so two concurrent votes for the same club can no
+	// longer read the same stale count and overwrite each other, which used
+	// to lose a vote when two voters voted the same club at once.
+	return s.db.Update(func(tx *bbolt.Tx) error {
+		var c domain.Club
+		if e := get(tx, "clubs", id, &c); e != nil {
+			return fmt.Errorf("load club: %w", e)
+		}
+		c.VoteCount++
+		return put(tx, "clubs", id, c)
+	})
 }
